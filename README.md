@@ -1,73 +1,122 @@
-# Welcome to your Lovable project
+# Drvyn - AI Productivity Dashboard
 
-## Project info
+A modern, AI-powered productivity dashboard built with React, TypeScript, and Flask backend.
 
-**URL**: https://lovable.dev/projects/0d60cac1-b16d-4bf8-be6d-f0c736c46332
+## Features
 
-## How can I edit this code?
+- **AI-Powered Scheduling**: Natural language task scheduling with AI assistance
+- **24-Hour Calendar**: Full day scheduling from midnight to midnight
+- **Event Management**: Create, edit, and delete calendar events
+- **User Authentication**: Secure login and registration system
+- **Real-time Updates**: Live calendar updates with backend synchronization
+- **Responsive Design**: Works on desktop and mobile devices
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **shadcn/ui** for beautiful, accessible components
+- **Tailwind CSS** for styling
+- **React Router** for navigation
+- **React Hook Form** with Zod validation
+- **Sonner** for toast notifications
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0d60cac1-b16d-4bf8-be6d-f0c736c46332) and start prompting.
+### Backend
+- **Flask** Python web framework
+- **SQLAlchemy** for database ORM
+- **Flask-Login** for authentication
+- **Flask-CORS** for cross-origin requests
+- **AI Integration** with OpenAI and Cohere APIs
 
-Changes made via Lovable will be committed automatically to this repo.
+## Quick Start
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js 18+ and npm
+- Python 3.8+ and pip
+- Cohere API key (for AI features)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd drvyn-ai-productivity
+   ```
 
-Follow these steps:
+2. **Install frontend dependencies**
+   ```bash
+   npm install
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Install backend dependencies**
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. **Set up environment variables**
+   ```bash
+   # Create .env file in backend directory
+   echo "COHERE_API_KEY=your_cohere_api_key_here" > backend/.env
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+5. **Start the backend**
+   ```bash
+   cd backend
+   python app.py
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+6. **Start the frontend** (in a new terminal)
+   ```bash
+   npm run dev
+   ```
+
+7. **Open your browser**
+   Navigate to `http://localhost:8080`
+
+## Usage
+
+1. **Register/Login**: Create an account or sign in
+2. **Schedule Tasks**: Use the AI chatbot to schedule events naturally
+   - "Schedule a meeting tomorrow at 2pm"
+   - "Block out 3 hours for essay writing on Friday"
+   - "Add a workout session this afternoon"
+3. **Manage Events**: Edit or delete events directly from the calendar
+4. **View Calendar**: Switch between day, week, and month views
+
+## Development
+
+### Frontend Development
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
 ```
 
-**Edit a file directly in GitHub**
+### Backend Development
+```bash
+cd backend
+python app.py        # Start Flask server
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## API Endpoints
 
-**Use GitHub Codespaces**
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/events` - Get user's events
+- `POST /api/events` - Create new event
+- `PUT /api/events/<id>` - Update event
+- `DELETE /api/events/<id>` - Delete event
+- `POST /ai` - AI chat endpoint
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Contributing
 
-## What technologies are used for this project?
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-This project is built with:
+## License
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0d60cac1-b16d-4bf8-be6d-f0c736c46332) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+MIT License - see LICENSE file for details
