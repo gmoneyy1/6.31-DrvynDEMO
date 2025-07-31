@@ -20,10 +20,14 @@ const Login = () => {
       const result = await login(username, password);
       if (result.success) {
         toast.success("Login successful!");
+        console.log("Login successful, redirecting to dashboard...");
+        // Force redirect to dashboard
+        window.location.href = "/";
       } else {
         toast.error(result.error || "Login failed");
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast.error("An error occurred during login");
     } finally {
       setIsLoading(false);
