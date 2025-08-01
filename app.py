@@ -511,4 +511,4 @@ if __name__ == "__main__":
     # Run in production mode if not in debug
     debug = os.environ.get('FLASK_ENV') == 'development'
     
-    app.run(debug=debug, port=port, host='0.0.0.0') 
+    app.run(debug=debug, port=port, host='0.0.0.0') # Heroku deployment test
