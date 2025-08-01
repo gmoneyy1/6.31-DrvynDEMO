@@ -40,6 +40,10 @@ if not origins:
 CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True)
 
 @app.before_request
+def log_request_info():
+    app.logger.info(f"Incoming {request.method} to {request.path}")
+
+@app.before_request
 def handle_options():
     if request.method == 'OPTIONS':
         return '', 200
@@ -143,14 +147,23 @@ def logout():
     logout_user()
     return jsonify({"success": True})
 
-@app.route("/api/user", methods=['GET'])
+@app.route("/api/user", methods=['GET', 'OPTIONS'])
 @login_required
 def get_user():
-    return jsonify({"id": current_user.id, "username": current_user.username})
+    if request.method == 'OPTIONS':
+        return '', 200
+    return jsonify({
+        "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "timezone": current_user.timezone
+    })
 
-@app.route("/api/events", methods=['GET'])
+@app.route("/api/events", methods=['GET', 'OPTIONS'])
 @login_required
 def get_events():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         events = Event.query.filter_by(user_id=current_user.id).all()
         return jsonify({"events": [{
