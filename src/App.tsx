@@ -82,3 +82,4 @@ const App = () => (
 );
 
 export default App;
+// Force Vercel redeploy - Fri Aug  1 01:55:38 PDT 2025
