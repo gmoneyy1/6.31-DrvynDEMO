@@ -1,7 +1,7 @@
 {
-  "name": "drvyn-ai-productivity",
+  "name": "drvyn-daily-dashboard",
+  "version": "1.0.1",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
