@@ -167,19 +167,16 @@ def register():
     return jsonify({"message": "Register endpoint", "method": "POST"})
 
 @app.route("/logout")
-# @login_required
 def logout():
     logout_user()
     return jsonify({"success": True, "message": "Logged out successfully"})
 
 @app.route("/app")
-# @login_required
 def app_route():
     return jsonify({"message": "App endpoint", "user": current_user.username})
 
 # API Routes
 @app.route("/api/events", methods=['GET'])
-# @login_required
 # @rate_limit(max_requests=100, window=60)  # Temporarily disabled for testing
 def get_events():
     try:
@@ -197,7 +194,6 @@ def get_events():
         return jsonify({"error": "Failed to fetch events"}), 500
 
 @app.route("/api/events", methods=['POST'])
-# @login_required
 @rate_limit(max_requests=20, window=60)
 def create_event():
     try:
@@ -236,7 +232,6 @@ def create_event():
         return jsonify({"error": "Failed to create event"}), 500
 
 @app.route("/api/events/<int:event_id>", methods=['DELETE'])
-# @login_required
 @rate_limit(max_requests=20, window=60)
 def delete_event(event_id):
     try:
@@ -252,7 +247,6 @@ def delete_event(event_id):
         return jsonify({"error": "Failed to delete event"}), 500
 
 @app.route("/api/user", methods=['GET'])
-# @login_required
 def get_user():
     try:
         return jsonify({
@@ -266,7 +260,6 @@ def get_user():
         return jsonify({"error": "Failed to fetch user data"}), 500
 
 @app.route("/api/user/timezone", methods=['PUT'])
-# @login_required
 @rate_limit(max_requests=10, window=60)
 def update_user_timezone():
     try:
@@ -285,7 +278,6 @@ def update_user_timezone():
         return jsonify({"error": "Failed to update timezone"}), 500
 
 @app.route("/api/events/<int:event_id>", methods=['PUT'])
-# @login_required
 @rate_limit(max_requests=20, window=60)
 def update_event(event_id):
     try:
@@ -316,7 +308,6 @@ def update_event(event_id):
 
 # AI Chat with conversation persistence
 @app.route("/ai", methods=["POST"])
-# @login_required
 # @rate_limit(max_requests=100, window=60)  # Temporarily disabled for testing
 def ai():
     try:
