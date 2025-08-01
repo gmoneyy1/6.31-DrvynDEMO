@@ -24,7 +24,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///drv
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Enable CORS
-CORS(app, supports_credentials=True, origins=["*"])
+CORS(app, supports_credentials=True, origins=["http://localhost:8080", "http://localhost:5173", "http://localhost:3000", "https://6-31-drvyn-demo.vercel.app", "https://6-31-drvyn-demo-258mumzzp-george-s-projects-afbe87b4.vercel.app", "https://*.vercel.app"])
 
 # Configure AI providers
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
