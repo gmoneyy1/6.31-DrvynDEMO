@@ -106,11 +106,12 @@ def index():
     return jsonify({"message": "Drvyn API is running", "status": "ok"})
 
 @app.route("/test")
-@app.route("/health")
 def test():
+    return jsonify({"message": "Test endpoint working", "cors": "enabled", "backend": "python"})
+
+@app.route("/health")
 def health():
     return jsonify({"status": "ok", "message": "Heroku app is running"})
-    return jsonify({"message": "Test endpoint working", "cors": "enabled", "backend": "python"})
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
