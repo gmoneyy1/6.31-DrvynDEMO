@@ -1,6 +1,6 @@
 // API service layer for backend integration
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://drvyn-backend-6lf3.onrender.com');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://six-31-drvyndemo.onrender.com');
 
 // Types
 export interface User {
