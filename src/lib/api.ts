@@ -36,7 +36,7 @@ export const auth = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
-      credentials: 'omit'
+      credentials: 'include'
     });
     return response.json();
   },
@@ -46,7 +46,7 @@ export const auth = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password }),
-      credentials: 'omit'
+      credentials: 'include'
     });
     return response.json();
   },
@@ -55,7 +55,7 @@ export const auth = {
     try {
       const response = await fetch(`${API_BASE_URL}/logout`, {
         method: 'GET',
-        credentials: 'omit'
+        credentials: 'include'
       });
       return response.json();
     } catch (error) {
@@ -66,7 +66,7 @@ export const auth = {
   getUser: async (): Promise<User> => {
     console.log('Making getUser request to:', `${API_BASE_URL}/api/user`);
     const response = await fetch(`${API_BASE_URL}/api/user`, {
-      credentials: 'omit'
+      credentials: 'include'
     });
     console.log('getUser response status:', response.status);
     if (!response.ok) {
@@ -83,7 +83,7 @@ export const auth = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ timezone }),
-      credentials: 'omit'
+      credentials: 'include'
     });
     return response.json();
   }
@@ -94,7 +94,7 @@ export const events = {
   getAll: async (): Promise<{ events: Event[] }> => {
     console.log('API: Fetching events from:', `${API_BASE_URL}/api/events`);
     const response = await fetch(`${API_BASE_URL}/api/events`, {
-      credentials: 'omit'
+      credentials: 'include'
     });
     console.log('API: Events response status:', response.status);
     if (!response.ok) {
@@ -111,7 +111,7 @@ export const events = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, start, end }),
-      credentials: 'omit'
+      credentials: 'include'
     });
     if (!response.ok) {
       throw new Error('Failed to create event');
@@ -124,7 +124,7 @@ export const events = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, start, end }),
-      credentials: 'omit'
+      credentials: 'include'
     });
     if (!response.ok) {
       throw new Error('Failed to update event');
@@ -135,7 +135,7 @@ export const events = {
   delete: async (eventId: number): Promise<{ success: boolean }> => {
     const response = await fetch(`${API_BASE_URL}/api/events/${eventId}`, {
       method: 'DELETE',
-      credentials: 'omit'
+      credentials: 'include'
     });
     if (!response.ok) {
       throw new Error('Failed to delete event');
@@ -151,7 +151,7 @@ export const ai = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ input }),
-      credentials: 'omit'
+      credentials: 'include'
     });
     if (!response.ok) {
       throw new Error('Failed to send message to AI');
