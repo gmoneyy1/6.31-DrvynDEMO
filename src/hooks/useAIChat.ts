@@ -22,6 +22,16 @@ export const useAIChat = () => {
       const response: AIResponse = await ai.sendMessage(input);
       console.log('AI Response:', response);
       
+      // Check if response has commands property
+      if (!response.commands || !Array.isArray(response.commands)) {
+        console.error('Invalid AI response format:', response);
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: 'Sorry, I encountered an error. Please try again.' 
+        }]);
+        return;
+      }
+      
       // Process AI commands
       let hasMessage = false;
       for (const command of response.commands) {

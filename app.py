@@ -248,6 +248,7 @@ def delete_event(event_id):
         return jsonify({"error": "Failed to delete event"}), 500
 
 @app.route("/api/user", methods=['GET'])
+@login_required
 def get_user():
     try:
         return jsonify({
