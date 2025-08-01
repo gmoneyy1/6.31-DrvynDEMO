@@ -153,3 +153,4 @@ MIT License - see LICENSE file for details
 
 **Built with ❤️ using React, TypeScript, and Flask**
 # Force Vercel deployment
+# Force Vercel redeploy
