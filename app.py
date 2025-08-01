@@ -1,14 +1,16 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, send_from_directory, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
+import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import cohere
 from uuid import uuid4
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import pytz
 from functools import wraps
 import logging
@@ -16,7 +18,7 @@ from collections import defaultdict
 import time
 import re
 
-# Load environment variables
+# Load environment
 load_dotenv()
 
 app = Flask(__name__)
@@ -24,40 +26,36 @@ app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY", str(uuid4()))
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///drvyn.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Configure CORS
+# 🔑 Session cookies cross-origin fix
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True
+)
+
+# CORS configuration
 allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
-origins = [o.strip() for o in allowed_origins if o.strip()]
+origins = [origin.strip() for origin in allowed_origins if origin.strip()]
 if not origins:
     origins = [
         "http://localhost:8080",
         "http://localhost:5173",
         "http://localhost:3000",
         "https://6-31-drvyn-demo.vercel.app",
-        "https://6-31-drvyn-demo-258mumzzp-george-s-projects-afbe87b4.vercel.app",
-        "https://6-31-drvyn-demo-gxxwzbk5b-george-s-projects-afbe87b4.vercel.app"
     ]
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": origins}})
 
-# Enable CORS for all endpoints & methods
-CORS(
-    app,
-    supports_credentials=True,
-    resources={r"/*": {"origins": origins}},
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"]
-)
-
-# Log every incoming request
-@app.before_request
-def log_request_info():
-    app.logger.info(f"{request.method} {request.path}")
-
-# Database & Login
+# Database + Login setup
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# AI provider
+COHERE_API_KEY = os.getenv("COHERE_API_KEY")
+
+# ---------------------------
 # Models
+# ---------------------------
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -74,8 +72,6 @@ class Event(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -88,165 +84,126 @@ class Conversation(db.Model):
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-# Rate limiting
+# ---------------------------
+# Rate Limit
+# ---------------------------
 request_counts = defaultdict(list)
 def rate_limit(max_requests=20, window=60):
     def decorator(f):
         @wraps(f)
-        def decorated_function(*args, **kwargs):
-            user_id = current_user.id if current_user.is_authenticated else request.remote_addr
+        def decorated(*args, **kwargs):
+            uid = current_user.id if current_user.is_authenticated else request.remote_addr
             now = time.time()
-            user_requests = request_counts[user_id]
+            user_requests = request_counts[uid]
             user_requests[:] = [t for t in user_requests if now - t < window]
             if len(user_requests) >= max_requests:
                 return jsonify({"error": "Rate limit exceeded"}), 429
             user_requests.append(now)
             return f(*args, **kwargs)
-        return decorated_function
+        return decorated
     return decorator
 
-def clear_rate_limits():
-    request_counts.clear()
-    app.logger.info("Rate limits cleared")
+@app.before_request
+def handle_options():
+    """Handle all OPTIONS to prevent 405"""
+    if request.method == "OPTIONS":
+        return '', 200
 
+# ---------------------------
 # Routes
-@app.route("/")
-def index():
-    return jsonify({"message": "Drvyn API is running", "status": "ok"})
-
+# ---------------------------
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "message": "Server running"})
+    return jsonify({"status": "ok", "build": "2025-08-01-1430", "updated": True})
 
-@app.route("/login", methods=['POST'])
+@app.route("/version")
+def version():
+    return jsonify({"version": "v2025-08-01-1430", "updated": True})
+
+@app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    username, password = data.get('username'), data.get('password')
+    username = data.get("username")
+    password = data.get("password")
     user = User.query.filter_by(username=username).first()
     if user and check_password_hash(user.password_hash, password):
         login_user(user)
-        return jsonify({"success": True, "user": {"id": user.id, "username": user.username}})
+        return jsonify({"success": True})
     return jsonify({"success": False, "error": "Invalid credentials"}), 401
 
-@app.route("/register", methods=['POST'])
+@app.route("/register", methods=["POST"])
 def register():
-    try:
-        data = request.get_json()
-        username, email, password = data.get('username'), data.get('email'), data.get('password')
-        if User.query.filter_by(username=username).first():
-            return jsonify({"success": False, "error": "Username exists"}), 400
-        if User.query.filter_by(email=email).first():
-            return jsonify({"success": False, "error": "Email exists"}), 400
-        user = User(username=username, email=email, password_hash=generate_password_hash(password))
-        db.session.add(user)
-        db.session.commit()
-        login_user(user)
-        return jsonify({"success": True, "user": {"id": user.id, "username": user.username}})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    data = request.get_json()
+    if User.query.filter_by(username=data["username"]).first():
+        return jsonify({"error": "Username exists"}), 400
+    user = User(username=data["username"], email=data["email"],
+                password_hash=generate_password_hash(data["password"]))
+    db.session.add(user)
+    db.session.commit()
+    login_user(user)
+    return jsonify({"success": True})
 
 @app.route("/logout")
 def logout():
     logout_user()
     return jsonify({"success": True})
 
-@app.route("/api/user", methods=['GET'])
+@app.route("/api/user")
 @login_required
 def get_user():
-    return jsonify({
-        "id": current_user.id,
-        "username": current_user.username,
-        "email": current_user.email,
-        "timezone": current_user.timezone
-    })
+    return jsonify({"id": current_user.id, "username": current_user.username, "email": current_user.email})
 
-@app.route("/api/events", methods=['GET'])
+@app.route("/api/events", methods=["GET"])
 @login_required
 def get_events():
-    try:
-        events = Event.query.filter_by(user_id=current_user.id).all()
-        return jsonify({"events": [{
-            "id": e.id, "title": e.title,
-            "start": e.start_time.isoformat(), "end": e.end_time.isoformat()
-        } for e in events]})
-    except Exception as e:
-        app.logger.error(f"Error fetching events: {e}")
-        return jsonify({"error": "Failed to fetch events"}), 500
+    events = Event.query.filter_by(user_id=current_user.id).all()
+    return jsonify({"events": [{"id": e.id, "title": e.title,
+                                "start": e.start_time.isoformat(),
+                                "end": e.end_time.isoformat()} for e in events]})
 
-# AI Route
 @app.route("/ai", methods=["POST"])
 @login_required
 def ai():
+    user_input = request.json.get("input")
+    if not user_input:
+        return jsonify({"error": "No input"}), 400
+
+    conv = Conversation(user_id=current_user.id, role="user", content=user_input)
+    db.session.add(conv)
+    db.session.commit()
+
+    messages = [{"role": "system", "content": get_ai_prompt()}]
+    co = cohere.Client(COHERE_API_KEY)
+    resp = co.generate(prompt=user_input, max_tokens=300)
+    assistant_msg = resp.generations[0].text.strip()
+
+    db.session.add(Conversation(user_id=current_user.id, role="assistant", content=assistant_msg))
+    db.session.commit()
+
+    parsed = [{"command": "MESSAGE", "text": assistant_msg}]
     try:
-        app.logger.info(f"AI request received from user {current_user.username}")
-        user_input = request.json.get("input")
-        app.logger.info(f"User input: {user_input}")
-        
-        if not user_input:
-            return jsonify({"error": "No input provided"}), 400
+        match = re.search(r'\[.*\]', assistant_msg, re.DOTALL)
+        if match:
+            parsed = json.loads(match.group(0))
+    except:
+        pass
 
-        # Call Cohere AI service
-        app.logger.info("Calling Cohere AI service")
-        api_key = os.getenv("COHERE_API_KEY")
-        if not api_key or api_key == "your-cohere-api-key-here":
-            assistant_msg = "I'm sorry, but the Cohere API key is not configured. Please set up your Cohere API key in the .env file."
-        else:
-            try:
-                co = cohere.Client(api_key)
-                full_prompt = f"{get_ai_prompt()}\nUser: {user_input}\nAssistant:"
-                app.logger.info(f"Sending prompt to Cohere: {full_prompt[:200]}...")
-                response = co.generate(
-                    prompt=full_prompt,
-                    max_tokens=500,
-                    temperature=0.7,
-                    k=0, p=0.95
-                )
-                assistant_msg = response.generations[0].text.strip()
-                app.logger.info(f"AI raw output: {assistant_msg}")
-            except Exception as e:
-                app.logger.error(f"Cohere API error: {e}")
-                assistant_msg = f"I'm sorry, but there was an error with the Cohere service: {str(e)}"
-
-        # Parse commands - safe fallback
-        parsed_commands = []
-        try:
-            json_match = re.search(r'\[.*\]', assistant_msg, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(0)
-                parsed_commands = json.loads(json_str)
-                if not isinstance(parsed_commands, list):
-                    parsed_commands = [{"command": "MESSAGE", "text": assistant_msg}]
-            else:
-                parsed_commands = [{"command": "MESSAGE", "text": assistant_msg}]
-        except Exception as e:
-            app.logger.warning(f"AI JSON parse failed: {e}")
-            parsed_commands = [{"command": "MESSAGE", "text": assistant_msg}]
-        
-        app.logger.info(f"AI parsed commands: {parsed_commands}")
-        return jsonify({"commands": parsed_commands})
-    except Exception as e:
-        app.logger.error(f"Error in AI chat: {e}", exc_info=True)
-        return jsonify({"error": f"AI failed: {str(e)}"}), 500
+    return jsonify({"commands": parsed})
 
 def get_ai_prompt():
     return """
-You are Drvyn, a productivity assistant. Always respond with a valid JSON array.
-Commands: ADD (schedule), REMOVE (delete), MESSAGE (respond)
+You are Drvyn, a helpful assistant. Always return ONLY valid JSON arrays in responses.
 """
 
+# ---------------------------
+# Init Demo User
+# ---------------------------
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        if not User.query.filter_by(username='demo').first():
-            demo_user = User(
-                username='demo',
-                email='demo@example.com',
-                password_hash=generate_password_hash('demo123')
-            )
+        if not User.query.filter_by(username="demo").first():
+            demo_user = User(username="demo", email="demo@example.com",
+                             password_hash=generate_password_hash("demo123"))
             db.session.add(demo_user)
             db.session.commit()
-            app.logger.info("Demo user created")
-    clear_rate_limits()
-    app.run(debug=os.environ.get('FLASK_ENV')=='development',
-            port=int(os.environ.get('PORT', 8000)),
-            host='0.0.0.0')
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
