@@ -6,7 +6,6 @@ from flask_cors import CORS
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-import openai
 import cohere
 from uuid import uuid4
 import os
@@ -43,10 +42,8 @@ CORS(app,
      resources={r"/*": {"origins": origins}},
      supports_credentials=True)
 
-# Configure AI providers
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Configure AI provider
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
-AI_PROVIDER = os.getenv("AI_PROVIDER", "cohere")
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -327,10 +324,14 @@ def update_event(event_id):
 
 # AI Chat with conversation persistence
 @app.route("/ai", methods=["POST"])
+@login_required
 # @rate_limit(max_requests=100, window=60)  # Temporarily disabled for testing
 def ai():
     try:
+        app.logger.info(f"AI request received from user {current_user.username}")
         user_input = request.json.get("input")
+        app.logger.info(f"User input: {user_input}")
+        
         if not user_input:
             return jsonify({"error": "No input provided"}), 400
 
@@ -372,28 +373,42 @@ def ai():
         for conv in recent_conversations:
             messages.append({"role": conv.role, "content": conv.content})
 
-        # Check AI provider and call appropriate service
-        if AI_PROVIDER == "openai":
-            api_key = os.getenv("OPENAI_API_KEY")
-            if not api_key or api_key == "your-openai-api-key-here":
-                assistant_msg = "I'm sorry, but the OpenAI API key is not configured. Please set up your OpenAI API key in the .env file."
-            else:
-                try:
-                    client = openai.OpenAI(api_key=api_key)
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=messages,
-                        temperature=0.7,
-                        max_tokens=1000,
-                        top_p=0.95,
-                    )
-                    assistant_msg = response.choices[0].message.content.strip()
-                except Exception as e:
-                    assistant_msg = f"I'm sorry, but there was an error with the OpenAI service: {str(e)}"
-        
-        elif AI_PROVIDER == "cohere":
-            api_key = os.getenv("COHERE_API_KEY")
-            if not api_key or api_key == "your-cohere-api-key-here":
+        # Call Cohere AI service
+        app.logger.info("Calling Cohere AI service")
+        api_key = os.getenv("COHERE_API_KEY")
+        if not api_key or api_key == "your-cohere-api-key-here":
+            assistant_msg = "I'm sorry, but the Cohere API key is not configured. Please set up your Cohere API key in the .env file."
+        else:
+            try:
+                co = cohere.Client(api_key)
+                
+                # Build the full prompt with system message and conversation history
+                full_prompt = f"{get_ai_prompt()}\n\n"
+                
+                # Add conversation history
+                for msg in messages[1:]:  # Skip the system message
+                    if msg["role"] == "user":
+                        full_prompt += f"User: {msg['content']}\n"
+                    elif msg["role"] == "assistant":
+                        full_prompt += f"Assistant: {msg['content']}\n"
+                
+                full_prompt += f"User: {user_input}\nAssistant: Respond with ONLY valid JSON array. For scheduling requests, ALWAYS include an ADD command."
+                
+                app.logger.info(f"Sending prompt to Cohere: {full_prompt[:200]}...")
+                response = co.generate(
+                    prompt=full_prompt,
+                    max_tokens=500,
+                    temperature=0.7,
+                    k=0,
+                    p=0.95,
+                    frequency_penalty=0,
+                    presence_penalty=0
+                )
+                assistant_msg = response.generations[0].text.strip()
+                app.logger.info(f"Cohere response: {assistant_msg}")
+            except Exception as e:
+                app.logger.error(f"Cohere API error: {e}")
+                assistant_msg = f"I'm sorry, but there was an error with the Cohere service: {str(e)}"
                 assistant_msg = "I'm sorry, but the Cohere API key is not configured. Please set up your Cohere API key in the .env file."
             else:
                 try:
@@ -422,10 +437,8 @@ def ai():
                     )
                     assistant_msg = response.generations[0].text.strip()
                 except Exception as e:
+                    app.logger.error(f"Cohere API error: {e}")
                     assistant_msg = f"I'm sorry, but there was an error with the Cohere service: {str(e)}"
-        
-        else:
-            assistant_msg = "I'm sorry, but no AI provider is configured. Please set up either OpenAI or Cohere API key in the .env file."
 
         # Save assistant response
         assistant_conversation = Conversation(
