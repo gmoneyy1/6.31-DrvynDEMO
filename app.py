@@ -37,14 +37,14 @@ if not origins:
         "https://6-31-drvyn-demo-gxxwzbk5b-george-s-projects-afbe87b4.vercel.app"
     ]
 
-CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True)
-
-# Handle OPTIONS to avoid 405 errors
-@app.before_request
-def handle_options():
-    if request.method == 'OPTIONS':
-        app.logger.info(f"OPTIONS preflight for {request.path}")
-        return '', 200
+# Enable CORS for all endpoints & methods
+CORS(
+    app,
+    supports_credentials=True,
+    resources={r"/*": {"origins": origins}},
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"]
+)
 
 # Log every incoming request
 @app.before_request
@@ -202,7 +202,7 @@ def ai():
                     k=0, p=0.95
                 )
                 assistant_msg = response.generations[0].text.strip()
-                app.logger.info(f"Cohere response: {assistant_msg}")
+                app.logger.info(f"AI raw output: {assistant_msg}")
             except Exception as e:
                 app.logger.error(f"Cohere API error: {e}")
                 assistant_msg = f"I'm sorry, but there was an error with the Cohere service: {str(e)}"
@@ -222,6 +222,7 @@ def ai():
             app.logger.warning(f"AI JSON parse failed: {e}")
             parsed_commands = [{"command": "MESSAGE", "text": assistant_msg}]
         
+        app.logger.info(f"AI parsed commands: {parsed_commands}")
         return jsonify({"commands": parsed_commands})
     except Exception as e:
         app.logger.error(f"Error in AI chat: {e}", exc_info=True)
