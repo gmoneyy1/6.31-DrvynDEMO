@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: drvyn-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: COHERE_API_KEY
+        value: w7LJ52fFowvuLeRDmbGdfujrN4Tj3AheE6Sq2UrU
+    healthCheckPath: /health
