@@ -67,6 +67,7 @@ const AppRoutes = () => {
 
 const App = () => {
   console.log('=== APP LOADED - NEW DEPLOYMENT v3.0 ===');
+  console.log('=== FORCE DEPLOY - THIS SHOULD BE VISIBLE ===');
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
