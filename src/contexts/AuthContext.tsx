@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      console.log('=== NEW DEPLOYMENT DEBUGGING ===');
+      console.log('=== NEW DEPLOYMENT DEBUGGING v2.0 ===');
       console.log('Checking authentication...');
       const userData = await auth.getUser();
       console.log('User data received:', userData);
