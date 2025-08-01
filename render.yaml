@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: drvyn-backend
+    name: drvyn-backend-new
     env: python
     rootDir: .
     buildCommand: pip install -r requirements.txt
