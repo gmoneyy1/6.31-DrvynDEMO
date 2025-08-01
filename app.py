@@ -39,14 +39,17 @@ if not origins:
 
 CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True)
 
-@app.before_request
-def log_request_info():
-    app.logger.info(f"Incoming {request.method} to {request.path}")
-
+# Handle OPTIONS to avoid 405 errors
 @app.before_request
 def handle_options():
     if request.method == 'OPTIONS':
+        app.logger.info(f"OPTIONS preflight for {request.path}")
         return '', 200
+
+# Log every incoming request
+@app.before_request
+def log_request_info():
+    app.logger.info(f"{request.method} {request.path}")
 
 # Database & Login
 db = SQLAlchemy(app)
@@ -147,11 +150,9 @@ def logout():
     logout_user()
     return jsonify({"success": True})
 
-@app.route("/api/user", methods=['GET', 'OPTIONS'])
+@app.route("/api/user", methods=['GET'])
 @login_required
 def get_user():
-    if request.method == 'OPTIONS':
-        return '', 200
     return jsonify({
         "id": current_user.id,
         "username": current_user.username,
@@ -159,11 +160,9 @@ def get_user():
         "timezone": current_user.timezone
     })
 
-@app.route("/api/events", methods=['GET', 'OPTIONS'])
+@app.route("/api/events", methods=['GET'])
 @login_required
 def get_events():
-    if request.method == 'OPTIONS':
-        return '', 200
     try:
         events = Event.query.filter_by(user_id=current_user.id).all()
         return jsonify({"events": [{
@@ -208,7 +207,7 @@ def ai():
                 app.logger.error(f"Cohere API error: {e}")
                 assistant_msg = f"I'm sorry, but there was an error with the Cohere service: {str(e)}"
 
-        # Parse commands - relaxed for debug
+        # Parse commands - safe fallback
         parsed_commands = []
         try:
             json_match = re.search(r'\[.*\]', assistant_msg, re.DOTALL)
@@ -218,10 +217,9 @@ def ai():
                 if not isinstance(parsed_commands, list):
                     parsed_commands = [{"command": "MESSAGE", "text": assistant_msg}]
             else:
-                # Fallback: wrap whole AI message as MESSAGE
                 parsed_commands = [{"command": "MESSAGE", "text": assistant_msg}]
         except Exception as e:
-            app.logger.warning(f"Failed to parse AI response as JSON: {e}")
+            app.logger.warning(f"AI JSON parse failed: {e}")
             parsed_commands = [{"command": "MESSAGE", "text": assistant_msg}]
         
         return jsonify({"commands": parsed_commands})
