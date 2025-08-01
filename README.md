@@ -156,3 +156,4 @@ MIT License - see LICENSE file for details
 # Force Vercel redeploy
 # Force Vercel redeploy - all files present
 # Force Render redeploy - fix authentication issues
+# Force Render redeploy - automatic demo user creation
