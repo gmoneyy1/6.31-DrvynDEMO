@@ -19,15 +19,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      console.log('=== NEW DEPLOYMENT DEBUGGING v2.0 ===');
       console.log('Checking authentication...');
       const userData = await auth.getUser();
       console.log('User data received:', userData);
-      console.log('User data type:', typeof userData);
-      console.log('User data keys:', userData ? Object.keys(userData) : 'null');
-      console.log('Username value:', userData?.username);
-      console.log('Username type:', typeof userData?.username);
-      console.log('Username !== "User":', userData?.username !== 'User');
       
       // Verify we have valid user data
       if (userData && userData.username && userData.username !== 'User') {
@@ -35,9 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('Authentication successful, user set');
       } else {
         console.log('Invalid user data, setting user to null');
-        console.log('userData exists:', !!userData);
-        console.log('userData.username exists:', !!userData?.username);
-        console.log('userData.username !== "User":', userData?.username !== 'User');
         setUser(null);
         if (window.location.pathname === '/') {
           console.log('Invalid user data on main page, redirecting to login');
@@ -87,7 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await auth.login(username, password);
       console.log('Login response:', response);
       if (response.success) {
-        await checkAuth();
+        // Set user directly from response
+        setUser(response.user);
         return { success: true };
       } else {
         return { success: false, error: response.error || 'Login failed' };
@@ -102,7 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await auth.register(username, email, password);
       if (response.success) {
-        await checkAuth();
+        // Set user directly from response
+        setUser(response.user);
         return { success: true };
       } else {
         return { success: false, error: response.error || 'Registration failed' };

@@ -24,13 +24,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///drv
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Enable CORS
-CORS(app, supports_credentials=True, origins=[
-    "http://localhost:8080", 
-    "http://localhost:5173", 
-    "http://localhost:3000",
-    "https://your-frontend-domain.vercel.app",  # Replace with your actual Vercel domain
-    "https://drvyn-daily-dashboard.vercel.app"  # Common Vercel domain pattern
-])
+CORS(app, supports_credentials=True, origins=["http://localhost:8080", "http://localhost:5173", "http://localhost:3000"])
 
 # Configure AI providers
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -117,30 +111,17 @@ def test():
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    print(f"Login request - Method: {request.method}")
-    print(f"Request headers: {dict(request.headers)}")
-    
     if request.method == 'POST':
-        try:
-            data = request.get_json()
-            print(f"Login data: {data}")
-            
-            username = data.get('username')
-            password = data.get('password')
-            
-            print(f"Attempting login for user: {username}")
-            
-            user = User.query.filter_by(username=username).first()
-            if user and check_password_hash(user.password_hash, password):
-                login_user(user)
-                print(f"Login successful for user: {username}")
-                return jsonify({"success": True, "redirect": "/app"})
-            else:
-                print(f"Login failed for user: {username}")
-                return jsonify({"success": False, "error": "Invalid credentials"}), 401
-        except Exception as e:
-            print(f"Login error: {e}")
-            return jsonify({"success": False, "error": str(e)}), 500
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            return jsonify({"success": True, "user": {"id": user.id, "username": user.username, "email": user.email, "timezone": user.timezone}})
+        else:
+            return jsonify({"success": False, "error": "Invalid credentials"}), 401
     
     return jsonify({"message": "Login endpoint", "method": "POST"})
 
@@ -175,7 +156,7 @@ def register():
             
             print(f"User {username} created successfully")
             login_user(user)
-            return jsonify({"success": True, "redirect": "/app"})
+            return jsonify({"success": True, "user": {"id": user.id, "username": user.username, "email": user.email, "timezone": user.timezone}})
         except Exception as e:
             print(f"Registration error: {e}")
             return jsonify({"success": False, "error": str(e)}), 500

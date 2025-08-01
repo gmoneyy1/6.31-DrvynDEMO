@@ -29,6 +29,7 @@ interface TimeBlock {
   duration: string;
   category: string;
   color: string;
+  eventDate?: string; // Optional for backward compatibility
 }
 
 const CATEGORIES = {
@@ -115,15 +116,37 @@ export function CalendarView() {
     }
   }, [loadEvents, isAuthenticated, user]);
 
-  // Convert backend events to time blocks for the current date using useMemo
-  const timeBlocksForDate = useMemo(() => {
-    const todayString = selectedDate.toISOString().split('T')[0];
+  // Convert backend events to time blocks for the current view using useMemo
+  const timeBlocksForView = useMemo(() => {
+    let startDate: Date;
+    let endDate: Date;
+    
+    if (viewMode === "day") {
+      // For day view, show events for the selected date
+      startDate = new Date(selectedDate);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(selectedDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (viewMode === "week") {
+      // For week view, show events for the entire week
+      startDate = new Date(selectedDate);
+      startDate.setDate(selectedDate.getDate() - selectedDate.getDay());
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // For month view, show events for the entire month
+      startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+      endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+      endDate.setHours(23, 59, 59, 999);
+    }
     
     // Convert backend events to time blocks
     return backendEvents
       .filter(event => {
-        const eventDate = new Date(event.start).toISOString().split('T')[0];
-        return eventDate === todayString;
+        const eventDate = new Date(event.start);
+        return eventDate >= startDate && eventDate <= endDate;
       })
       .map(event => {
         const startTime = new Date(event.start).toLocaleTimeString('en-US', { 
@@ -152,14 +175,15 @@ export function CalendarView() {
           duration,
           category: 'work',
           color: CATEGORIES.work.color,
+          eventDate: new Date(event.start).toISOString().split('T')[0], // Add event date for filtering
         };
       });
-  }, [selectedDate, backendEvents]);
+  }, [selectedDate, viewMode, backendEvents]);
 
   // Update timeBlocks state only when the computed value changes
   useEffect(() => {
-    setTimeBlocks(timeBlocksForDate);
-  }, [timeBlocksForDate]);
+    setTimeBlocks(timeBlocksForView);
+  }, [timeBlocksForView]);
 
   const formatDate = (date: Date) => {
     if (viewMode === "day") {
@@ -483,9 +507,14 @@ export function CalendarView() {
                           />
                         ))}
                         
-                        {/* Sample events for today only */}
-                        {day.toDateString() === selectedDate.toDateString() && 
-                          timeBlocks.slice(0, 2).map((block, blockIndex) => {
+                        {/* Events for this day */}
+                        {timeBlocks
+                          .filter(block => {
+                            const blockDate = new Date(block.eventDate);
+                            return blockDate.toDateString() === day.toDateString();
+                          })
+                          .slice(0, 3)
+                          .map((block, blockIndex) => {
                             const startHour = parseInt(block.startTime.split(":")[0]);
                             const startMinute = parseInt(block.startTime.split(":")[1]);
                             const topPosition = startHour * 64 + (startMinute / 60) * 64;
@@ -568,28 +597,37 @@ export function CalendarView() {
                           {day.getDate()}
                         </div>
                         
-                        {/* Sample events for current date */}
-                        {day.toDateString() === selectedDate.toDateString() && (
-                          <div className="space-y-1">
-                            {timeBlocks.slice(0, 3).map((block, blockIndex) => (
-                              <div
-                                key={block.id}
-                                className={`text-xs p-1 rounded truncate ${block.color} text-white cursor-pointer`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBlockClick(block);
-                                }}
-                              >
-                                {block.title}
-                              </div>
-                            ))}
-                            {timeBlocks.length > 3 && (
-                              <div className="text-xs text-muted-foreground">
-                                +{timeBlocks.length - 3} more
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        {/* Events for this day */}
+                        {(() => {
+                          const dayEvents = timeBlocks.filter(block => {
+                            const blockDate = new Date(block.eventDate || '');
+                            return blockDate.toDateString() === day.toDateString();
+                          });
+                          
+                          if (dayEvents.length === 0) return null;
+                          
+                          return (
+                            <div className="space-y-1">
+                              {dayEvents.slice(0, 3).map((block, blockIndex) => (
+                                <div
+                                  key={block.id}
+                                  className={`text-xs p-1 rounded truncate ${block.color} text-white cursor-pointer`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBlockClick(block);
+                                  }}
+                                >
+                                  {block.title}
+                                </div>
+                              ))}
+                              {dayEvents.length > 3 && (
+                                <div className="text-xs text-muted-foreground">
+                                  +{dayEvents.length - 3} more
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}

@@ -57,7 +57,7 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, []); // Remove isLoading from dependencies to prevent infinite loop
 
   // Don't automatically load events on mount - wait for user to be authenticated
   // useEffect(() => {
