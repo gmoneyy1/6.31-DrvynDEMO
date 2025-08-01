@@ -39,6 +39,11 @@ if not origins:
 
 CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True)
 
+@app.before_request
+def handle_options():
+    if request.method == 'OPTIONS':
+        return '', 200
+
 # Database & Login
 db = SQLAlchemy(app)
 login_manager = LoginManager()
