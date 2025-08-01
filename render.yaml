@@ -12,4 +12,12 @@ services:
         generateValue: true
       - key: COHERE_API_KEY
         value: w7LJ52fFowvuLeRDmbGdfujrN4Tj3AheE6Sq2UrU
+      - key: CORS_ALLOWED_ORIGINS
+        value: |
+          http://localhost:8080,
+          http://localhost:5173,
+          http://localhost:3000,
+          https://6-31-drvyn-demo.vercel.app,
+          https://6-31-drvyn-demo-258mumzzp-george-s-projects-afbe87b4.vercel.app,
+          https://6-31-drvyn-demo-gxxwzbk5b-george-s-projects-afbe87b4.vercel.app
     healthCheckPath: /health

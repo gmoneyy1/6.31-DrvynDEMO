@@ -23,8 +23,25 @@ app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY", str(uuid4()))
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///drvyn.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Enable CORS
-CORS(app, supports_credentials=True, origins=["http://localhost:8080", "http://localhost:5173", "http://localhost:3000", "https://6-31-drvyn-demo.vercel.app", "https://6-31-drvyn-demo-258mumzzp-george-s-projects-afbe87b4.vercel.app", "https://*.vercel.app"])
+# Enable CORS with environment variable support
+allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+# Clean up origins (remove whitespace and empty strings)
+origins = [origin.strip() for origin in allowed_origins if origin.strip()]
+
+# Fallback to hardcoded origins if environment variable is not set
+if not origins:
+    origins = [
+        "http://localhost:8080",       # Local dev
+        "http://localhost:5173",       # Vite dev
+        "http://localhost:3000",       # React dev
+        "https://6-31-drvyn-demo.vercel.app",  # Vercel production
+        "https://6-31-drvyn-demo-258mumzzp-george-s-projects-afbe87b4.vercel.app",
+        "https://6-31-drvyn-demo-gxxwzbk5b-george-s-projects-afbe87b4.vercel.app"
+    ]
+
+CORS(app,
+     resources={r"/*": {"origins": origins}},
+     supports_credentials=True)
 
 # Configure AI providers
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
