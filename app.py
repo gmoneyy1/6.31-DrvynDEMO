@@ -24,7 +24,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///drv
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Enable CORS
-CORS(app, supports_credentials=True, origins=["http://localhost:8080", "http://localhost:5173", "http://localhost:3000"])
+CORS(app, supports_credentials=True, origins=["*"])
 
 # Configure AI providers
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -107,7 +107,7 @@ def index():
 
 @app.route("/test")
 def test():
-    return jsonify({"message": "Test endpoint working", "cors": "enabled"})
+    return jsonify({"message": "Test endpoint working", "cors": "enabled", "backend": "python"})
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -504,4 +504,11 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     clear_rate_limits()
-    app.run(debug=True, port=8000, host='0.0.0.0') 
+    
+    # Get port from environment variable (for production)
+    port = int(os.environ.get('PORT', 8000))
+    
+    # Run in production mode if not in debug
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    
+    app.run(debug=debug, port=port, host='0.0.0.0') 
