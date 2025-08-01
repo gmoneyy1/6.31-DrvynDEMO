@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Drvyn AI Productivity App Design System */
+
+@layer base {
+  :root {
+    /* New color scheme - Youthful blue, beige, air superiority blue, sea green */
+    --background: 220 14% 98%;
+    --foreground: 210 39% 25%;
+
+    --card: 220 14% 98%;
+    --card-foreground: 210 39% 25%;
+
+    --popover: 220 14% 96%;
+    --popover-foreground: 210 39% 25%;
+
+    /* Primary colors - Youthful blue theme */
+    --primary: 210 39% 35%;
+    --primary-foreground: 220 14% 98%;
+    --primary-glow: 203 23% 57%;
+
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 210 39% 35%;
+
+    --muted: 220 14% 95%;
+    --muted-foreground: 210 39% 55%;
+
+    --accent: 60 56% 91%;
+    --accent-foreground: 210 39% 35%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 14% 98%;
+
+    --border: 220 14% 88%;
+    --input: 220 14% 93%;
+    --ring: 210 39% 35%;
+
+    /* Design system tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(210 39% 35%), hsl(203 23% 57%));
+    --gradient-subtle: linear-gradient(135deg, hsl(220 14% 98%), hsl(220 14% 95%));
+    --gradient-card: linear-gradient(135deg, hsl(220 14% 98%), hsl(220 14% 93%));
+    --gradient-accent: linear-gradient(135deg, hsl(60 56% 91%), hsl(220 14% 93%));
+    
+    /* Shadows with new color scheme */
+    --shadow-soft: 0 2px 10px -2px hsl(210 39% 35% / 0.1);
+    --shadow-glow: 0 0 40px -12px hsl(203 23% 57% / 0.25);
+    --shadow-card: 0 1px 3px hsl(210 39% 25% / 0.04);
+    
+    /* Calendar category colors - updated with new scheme */
+    --category-work: 210 39% 35%;
+    --category-meeting: 203 23% 57%;
+    --category-personal: 158 55% 35%;
+    --category-break: 60 56% 75%;
+    --category-focus: 158 55% 45%;
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    --radius: 0.5rem;
+
+    /* Sidebar colors updated */
+    --sidebar-background: 220 14% 96%;
+    --sidebar-foreground: 210 39% 35%;
+    --sidebar-primary: 210 39% 35%;
+    --sidebar-primary-foreground: 220 14% 98%;
+    --sidebar-accent: 220 14% 93%;
+    --sidebar-accent-foreground: 210 39% 35%;
+    --sidebar-border: 220 14% 88%;
+    --sidebar-ring: 203 23% 57%;
+  }
+
+  .dark {
+    /* Dark mode adapted for the new color scheme */
+    --background: 210 39% 8%;
+    --foreground: 220 14% 98%;
+
+    --card: 210 39% 10%;
+    --card-foreground: 220 14% 98%;
+
+    --popover: 210 39% 10%;
+    --popover-foreground: 220 14% 98%;
+
+    --primary: 203 23% 57%;
+    --primary-foreground: 210 39% 8%;
+
+    --secondary: 210 39% 15%;
+    --secondary-foreground: 220 14% 98%;
+
+    --muted: 210 39% 15%;
+    --muted-foreground: 220 14% 65%;
+
+    --accent: 158 55% 25%;
+    --accent-foreground: 220 14% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 220 14% 98%;
+
+    --border: 210 39% 18%;
+    --input: 210 39% 15%;
+    --ring: 203 23% 57%;
+    
+    /* Dark mode sidebar */
+    --sidebar-background: 210 39% 10%;
+    --sidebar-foreground: 220 14% 98%;
+    --sidebar-primary: 203 23% 57%;
+    --sidebar-primary-foreground: 210 39% 8%;
+    --sidebar-accent: 210 39% 15%;
+    --sidebar-accent-foreground: 220 14% 98%;
+    --sidebar-border: 210 39% 18%;
+    --sidebar-ring: 203 23% 57%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
