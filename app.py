@@ -206,4 +206,14 @@ if __name__ == "__main__":
                              password_hash=generate_password_hash("demo123"))
             db.session.add(demo_user)
             db.session.commit()
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+            print("Demo user created successfully")
+        else:
+            print("Demo user already exists")
+    
+    # Use gunicorn for production, Flask dev server for local
+    if os.getenv("RENDER"):
+        # Production - let gunicorn handle it
+        pass
+    else:
+        # Development
+        app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
