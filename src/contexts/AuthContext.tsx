@@ -22,6 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Checking authentication...');
       const userData = await auth.getUser();
       console.log('User data received:', userData);
+      console.log('User data type:', typeof userData);
+      console.log('User data keys:', userData ? Object.keys(userData) : 'null');
+      console.log('Username value:', userData?.username);
+      console.log('Username type:', typeof userData?.username);
+      console.log('Username !== "User":', userData?.username !== 'User');
       
       // Verify we have valid user data
       if (userData && userData.username && userData.username !== 'User') {
@@ -29,6 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('Authentication successful, user set');
       } else {
         console.log('Invalid user data, setting user to null');
+        console.log('userData exists:', !!userData);
+        console.log('userData.username exists:', !!userData?.username);
+        console.log('userData.username !== "User":', userData?.username !== 'User');
         setUser(null);
         if (window.location.pathname === '/') {
           console.log('Invalid user data on main page, redirecting to login');
