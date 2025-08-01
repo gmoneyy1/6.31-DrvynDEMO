@@ -529,6 +529,21 @@ Commands: ADD (schedule), REMOVE (delete), MESSAGE (respond)
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        
+        # Create demo user if it doesn't exist
+        if not User.query.filter_by(username='demo').first():
+            demo_user = User(
+                username='demo',
+                email='demo@example.com',
+                password_hash=generate_password_hash('demo123'),
+                timezone='UTC'
+            )
+            db.session.add(demo_user)
+            db.session.commit()
+            print("Demo user created successfully")
+        else:
+            print("Demo user already exists")
+            
     clear_rate_limits()
     
     # Get port from environment variable (for production)
