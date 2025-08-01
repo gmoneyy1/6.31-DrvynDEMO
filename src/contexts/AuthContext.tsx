@@ -24,9 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('User data received:', userData);
       
       // Verify we have valid user data
-      if (userData && userData.username && userData.username !== 'User') {
+      if (userData && userData.username && userData.id) {
         setUser(userData);
-        console.log('Authentication successful, user set');
+        console.log('Authentication successful, user set:', userData);
       } else {
         console.log('Invalid user data, setting user to null');
         setUser(null);
