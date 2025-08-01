@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: drvyn-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: COHERE_API_KEY
+        sync: false
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///drvyn.db
+    healthCheckPath: /test
+    autoDeploy: true
